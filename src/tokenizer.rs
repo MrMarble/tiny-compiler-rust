@@ -12,7 +12,7 @@ pub enum Token {
  *
  * Turns raw code into an array of Tokens
  */
-fn tokenizer(input: &str) -> Vec<Token> {
+fn tokenizer(input: &str) -> Result<Vec<Token>, String> {
     let mut tokens: Vec<Token> = vec![];
 
     let mut char_iter = input.chars().peekable();
@@ -50,11 +50,11 @@ fn tokenizer(input: &str) -> Vec<Token> {
                 char_iter.next();
             }
             c if c.is_whitespace() => continue,
-            _ => panic!("Unknown token {}", c),
+            _ => return Err(format!("Unknown token {}", c)),
         }
     }
 
-    return tokens;
+    Ok(tokens)
 }
 
 #[cfg(test)]
@@ -63,19 +63,22 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn it_works() {
-        assert_eq!(tokenizer("("), vec![Token::ParenOpen]);
-        assert_eq!(tokenizer("( "), vec![Token::ParenOpen]);
-        assert_eq!(tokenizer(")"), vec![Token::ParenClose]);
-        assert_eq!(tokenizer("1337"), vec![Token::Number(String::from("1337"))]);
-        assert_eq!(tokenizer("add"), vec![Token::Name(String::from("add"))]);
+    fn it_works() -> Result<(), String> {
+        assert_eq!(tokenizer("(")?, vec![Token::ParenOpen]);
+        assert_eq!(tokenizer("( ")?, vec![Token::ParenOpen]);
+        assert_eq!(tokenizer(")")?, vec![Token::ParenClose]);
         assert_eq!(
-            tokenizer("\"mrmarble\""),
+            tokenizer("1337")?,
+            vec![Token::Number(String::from("1337"))]
+        );
+        assert_eq!(tokenizer("add")?, vec![Token::Name(String::from("add"))]);
+        assert_eq!(
+            tokenizer("\"mrmarble\"")?,
             vec![Token::String(String::from("mrmarble"))]
         );
 
         assert_eq!(
-            tokenizer("(add 2 (subtract 1 4))"),
+            tokenizer("(add 2 (subtract 1 4))")?,
             vec![
                 Token::ParenOpen,
                 Token::Name(String::from("add")),
@@ -88,11 +91,12 @@ mod tests {
                 Token::ParenClose
             ]
         );
+        Ok(())
     }
 
     #[test]
     #[should_panic]
     fn test_invalid() {
-        tokenizer("!");
+        tokenizer("!").unwrap();
     }
 }
