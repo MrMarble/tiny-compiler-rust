@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-enum Token {
+pub enum Token {
     ParenOpen,
     ParenClose,
     Number(String),
